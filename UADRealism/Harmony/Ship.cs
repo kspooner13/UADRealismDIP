@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using MelonLoader;
 using HarmonyLib;
@@ -527,14 +527,38 @@ namespace UADRealism
         }
     }
 
-    [HarmonyPatch(typeof(Ship._GenerateRandomShip_d__566))]
+    [HarmonyPatch]
     internal class Patch_ShipGenRandom
     {
-        [HarmonyPatch(nameof(Ship._GenerateRandomShip_d__566.MoveNext))]
-        [HarmonyPrefix]
-        internal static bool Prefix_MoveNext(Ship._GenerateRandomShip_d__566 __instance, out int __state, ref bool __result)
+        private static System.Type _stateMachineType = null;
+        private static System.Reflection.FieldInfo _stateField = null;
+        private static System.Reflection.FieldInfo _thisField = null;
+
+        internal static System.Type TargetType()
         {
-            __state = __instance.__1__state;
+            if (_stateMachineType != null)
+                return _stateMachineType;
+
+            // Find the compiler-generated async state machine type
+            var nestedTypes = typeof(Ship).GetNestedTypes(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+            foreach (var type in nestedTypes)
+            {
+                if (type.Name.StartsWith("_GenerateRandomShip_d__"))
+                {
+                    _stateMachineType = type;
+                    _stateField = type.GetField("__1__state", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    _thisField = type.GetField("__4__this", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    return type;
+                }
+            }
+            return null;
+        }
+
+        [HarmonyPatch("MoveNext")]
+        [HarmonyPrefix]
+        internal static bool Prefix_MoveNext(object __instance, out int __state, ref bool __result)
+        {
+            __state = (int)_stateField.GetValue(__instance);
             var gen = Patch_Ship.GenerateShipHandler;
             switch (__state)
             {
@@ -550,7 +574,7 @@ namespace UADRealism
                     gen.SelectComponents(GenerateShip.ComponentSelectionPass.Initial);
                     // We then skip setting base hull stats (we do this in initial design)
                     // and AdjustHullStats.
-                    __instance.__1__state = 7;
+                    _stateField.SetValue(__instance, 7);
                     break;
 
                 // 7: UpdateHullStats
@@ -559,25 +583,26 @@ namespace UADRealism
                     // Before doing parts, set out how much tonnage is free?
                     gen.SelectParts();
 
-                    __instance.__1__state = 9; // this waits a frame and advances to 10
+                    _stateField.SetValue(__instance, 9); // this waits a frame and advances to 10
                     break;
 
                 case 9: // wait a frame
                     // We'll also use this to do work.
 
                     // Replace step 10.
-                    __instance.__4__this.UpdateHullStats();
-                    foreach (var part in __instance.__4__this.parts)
-                        part.UpdateCollidersSize(__instance.__4__this);
-                    foreach (var part in __instance.__4__this.parts)
-                        Part.GunBarrelLength(part.data, __instance.__4__this, true);
+                    var ship = (Ship)_thisField.GetValue(__instance);
+                    ship.UpdateHullStats();
+                    foreach (var part in ship.parts)
+                        part.UpdateCollidersSize(ship);
+                    foreach (var part in ship.parts)
+                        Part.GunBarrelLength(part.data, ship, true);
                     // let 9 execute, don't change incoming state. This will set
                     // next state to 10.
                     break;
 
                 case 10: // AHS and update parts. Done above.
                     // Skip this and just run 12.
-                    __instance.__1__state = 11;
+                    _stateField.SetValue(__instance, 11);
                     break;
 
                 // 11: Verify maincal guns and barrels
@@ -587,22 +612,24 @@ namespace UADRealism
                     // the end.
                     gen.SelectComponents(GenerateShip.ComponentSelectionPass.PostParts);
                     // FIXME run NeedComponentActive??
-                    gen.AddArmorToLimit(__instance.__4__this.Tonnage());
-                    __instance.__1__state = 17;
+                    var ship2 = (Ship)_thisField.GetValue(__instance);
+                    gen.AddArmorToLimit(ship2.Tonnage());
+                    _stateField.SetValue(__instance, 17);
                     break;
             }
             return true;
         }
 
-        [HarmonyPatch(nameof(Ship._GenerateRandomShip_d__566.MoveNext))]
+        [HarmonyPatch("MoveNext")]
         [HarmonyPostfix]
-        internal static void Postfix_MoveNext(Ship._GenerateRandomShip_d__566 __instance, int __state)
+        internal static void Postfix_MoveNext(object __instance, int __state)
         {
             var gen = Patch_Ship.GenerateShipHandler;
-            switch (__instance.__1__state)
+            int currentState = (int)_stateField.GetValue(__instance);
+            switch (currentState)
             {
                 case 0: // Initial run. Set minspeed etc.
-                    if (__instance.__1__state == 1)
+                    if (currentState == 1)
                         gen.DesignShipInitial(__instance);
                     break;
             }

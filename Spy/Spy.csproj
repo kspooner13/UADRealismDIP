@@ -1,0 +1,80 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Spy</RootNamespace>
+    <AssemblyName>Spy</AssemblyName>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <!-- Optional: set OutputPath to game Mods folder (adjust path for your install) -->
+    <!-- <OutputPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\Mods\</OutputPath> -->
+        <OutputPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\Mods\</OutputPath>
+  </PropertyGroup>
+
+  <!-- Copy TAF DLL into Spy folder before build if not present (from TAF_Nightly) -->
+  <Target Name="EnsureTafDll" BeforeTargets="ResolveAssemblyReferences">
+    <Copy SourceFiles="$(ProjectDir)..\TweaksAndFixes\TAF_Nightly\TweaksAndFixes.dll"
+          DestinationFiles="$(ProjectDir)TweaksAndFixes.dll"
+          SkipUnchangedFiles="true"
+          Condition="Exists('$(ProjectDir)..\TweaksAndFixes\TAF_Nightly\TweaksAndFixes.dll')" />
+  </Target>
+
+  <ItemGroup>
+    <!-- Reference TAF from DLL in this folder (Spy). Build TweaksAndFixes first or run EnsureTafDll. -->
+    <Reference Include="TweaksAndFixes">
+      <HintPath>$(ProjectDir)TweaksAndFixes.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\net6\0Harmony.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\Assembly-CSharp.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Il2CppInterop.Runtime">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\net6\Il2CppInterop.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Il2Cppmscorlib">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\Il2Cppmscorlib.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Il2CppSystem">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\Il2CppSystem.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Il2CppSystem.Core">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\Il2CppSystem.Core.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="MelonLoader">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\net6\MelonLoader.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\UnityEngine.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\UnityEngine.UI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\Unity.TextMeshPro.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

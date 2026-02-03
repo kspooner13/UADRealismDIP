@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Il2Cpp;
@@ -574,7 +574,16 @@ namespace UADRealism
         float _tngLimit;
         bool _isLight;
         float _desiredSpeed;
-        Ship._GenerateRandomShip_d__566 _this;
+        object _this; // Compiler-generated async state machine type
+        System.Type _thisType;
+        System.Reflection.FieldInfo _isRefitModeField;
+        System.Reflection.FieldInfo _isSimpleRefitField;
+        System.Reflection.FieldInfo _adjustTonnageField;
+        System.Reflection.FieldInfo _customTonnageRatioField;
+        System.Reflection.FieldInfo _customRangeField;
+        System.Reflection.FieldInfo _customSurvField;
+        System.Reflection.FieldInfo _savedSpeedMinValueField;
+        System.Reflection.FieldInfo __8__1Field;
         Il2CppSystem.Random _rnd;
         Ship _ship;
         bool _isMissionMainShip;
@@ -1357,14 +1366,68 @@ namespace UADRealism
             return false;
         }
 
-        public void DesignShipInitial(Ship._GenerateRandomShip_d__566 coroutine)
+        private void InitializeReflectionFields()
+        {
+            if (_this == null || _thisType != null)
+                return;
+
+            _thisType = _this.GetType();
+            _isRefitModeField = _thisType.GetField("_isRefitMode_5__2", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            _isSimpleRefitField = _thisType.GetField("isSimpleRefit", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            _adjustTonnageField = _thisType.GetField("adjustTonnage", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            _customTonnageRatioField = _thisType.GetField("customTonnageRatio", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            _customRangeField = _thisType.GetField("customRange", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            _customSurvField = _thisType.GetField("customSurv", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            _savedSpeedMinValueField = _thisType.GetField("_savedSpeedMinValue_5__3", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            __8__1Field = _thisType.GetField("__8__1", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        }
+
+        private T GetFieldValue<T>(string fieldName, T defaultValue = default(T))
+        {
+            if (_this == null)
+                return defaultValue;
+            InitializeReflectionFields();
+            var field = _thisType.GetField(fieldName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (field == null)
+                return defaultValue;
+            var value = field.GetValue(_this);
+            return value != null ? (T)value : defaultValue;
+        }
+
+        private void SetFieldValue(string fieldName, object value)
+        {
+            if (_this == null)
+                return;
+            InitializeReflectionFields();
+            var field = _thisType.GetField(fieldName, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (field != null)
+                field.SetValue(_this, value);
+        }
+
+        public void DesignShipInitial(object coroutine)
         {
             var smd = _ship.ModData();
             _this = coroutine;
-            _this.__8__1.rnd = _rnd = new Il2CppSystem.Random(Util.FromTo(1, 1000000, null)); // yes, this is how stock inits it.
+            InitializeReflectionFields();
 
+            // Access __8__1.rnd via reflection
+            if (__8__1Field != null)
+            {
+                var __8__1 = __8__1Field.GetValue(_this);
+                if (__8__1 != null)
+                {
+                    var rndField = __8__1.GetType().GetField("rnd", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (rndField != null)
+                    {
+                        _rnd = new Il2CppSystem.Random(Util.FromTo(1, 1000000, null));
+                        rndField.SetValue(__8__1, _rnd);
+                    }
+                }
+            }
 
-            if (_this._isRefitMode_5__2 && !_this.isSimpleRefit)
+            bool isRefitMode = GetFieldValue<bool>("_isRefitMode_5__2");
+            bool isSimpleRefit = GetFieldValue<bool>("isSimpleRefit");
+            if (isRefitMode && !isSimpleRefit)
             {
                 float tng = _ship.Tonnage();
                 float tRatio = _tngLimit / tng;
@@ -1388,7 +1451,8 @@ namespace UADRealism
             }
             else
             {
-                if (!_this.adjustTonnage)
+                bool adjustTonnage = GetFieldValue<bool>("adjustTonnage");
+                if (!adjustTonnage)
                 {
                     var tng = _ship.Tonnage();
                     var clampedTng = Mathf.Clamp(tng, _ship.TonnageMin(), _ship.TonnageMax());
@@ -1403,9 +1467,10 @@ namespace UADRealism
                         tMax = tMin;
 
                     float newTng;
-                    if (_this.customTonnageRatio.HasValue)
+                    var customTonnageRatio = GetFieldValue<Il2CppSystem.Nullable<float>>("customTonnageRatio");
+                    if (customTonnageRatio.HasValue)
                     {
-                        newTng = Mathf.Lerp(tMin, tMax, _this.customTonnageRatio.Value);
+                        newTng = Mathf.Lerp(tMin, tMax, customTonnageRatio.Value);
                     }
                     else
                     {
@@ -1432,7 +1497,7 @@ namespace UADRealism
 
             float CbAvg = 0f;
             float CpAvg = 0f;
-            if (!_this._isRefitMode_5__2)
+            if (!isRefitMode)
             {
                 for (int i = _ship.hull.data.sectionsMin; i <= _ship.hull.data.sectionsMax; ++i)
                 {
@@ -1515,7 +1580,7 @@ namespace UADRealism
             speedKts = Mathf.Clamp(_ship.hull.data.shipType.speedMin, _ship.hull.data.shipType.speedMax, speedKts);
             // if this is a refit, we'll use this as our goal speed but maybe not hit it.
 
-            if (_this._isRefitMode_5__2)
+            if (isRefitMode)
             {
                 if (ModUtils.Range(0f, 1f, null, _rnd) > 0.75f)
                 {
@@ -1551,13 +1616,13 @@ namespace UADRealism
                 if (_ship.modelState == Ship.ModelState.Constructor || _ship.modelState == Ship.ModelState.Battle)
                     _ship.RefreshHull(false);
 
-                _this._savedSpeedMinValue_5__3 = _ship.speedMax;
+                SetFieldValue("_savedSpeedMinValue_5__3", _ship.speedMax);
             }
             _desiredSpeed = _ship.speedMax;
 
-            if (_this._isRefitMode_5__2)
+            if (isRefitMode)
             {
-                if (!_this.isSimpleRefit)
+                if (!isSimpleRefit)
                 {
                     if (_ship.CurrentCrewQuarters < Ship.CrewQuarters.Standard)
                         _ship.CurrentCrewQuarters = Ship.CrewQuarters.Standard;
@@ -1567,15 +1632,17 @@ namespace UADRealism
             {
                 _ship.CurrentCrewQuarters = (Ship.CrewQuarters)ModUtils.RangeToInt(ModUtils.BiasRange(ModUtils.DistributedRange(1f, 2, null, _rnd), _isLight ? -0.33f : 0f), 3);
 
-                _ship.SetOpRange(_this.customRange.HasValue ? _this.customRange.Value :
+                var customRange = GetFieldValue<Il2CppSystem.Nullable<VesselEntity.OpRange>>("customRange");
+                _ship.SetOpRange(customRange.HasValue ? customRange.Value :
                     (VesselEntity.OpRange)ModUtils.Clamp(
                         (int)ShipStats.GetDesiredOpRange(_sType, _hullYear) + ModUtils.RangeToInt(ModUtils.DistributedRange(1f, 4, null, _rnd), 3) - 1,
                         (int)VesselEntity.OpRange.VeryLow,
                         (int)VesselEntity.OpRange.VeryHigh), true);
 
-                if (_this.customSurv.HasValue)
+                var customSurv = GetFieldValue<Il2CppSystem.Nullable<float>>("customSurv");
+                if (customSurv.HasValue)
                 {
-                    _ship.survivability = _this.customSurv.Value;
+                    _ship.survivability = customSurv.Value;
                 }
                 else
                 {
@@ -1625,7 +1692,7 @@ namespace UADRealism
             foreach (var ct in G.GameData.compTypes.Values)
             {
                 // Only some types can be changed in refits.
-                if (_this._isRefitMode_5__2)
+                if (isRefitMode)
                 {
                     switch (ct.name)
                     {
@@ -1664,7 +1731,7 @@ namespace UADRealism
                         case "engine":
                         case "boilers":
                         case "shaft":
-                            if (_this.isSimpleRefit)
+                            if (isSimpleRefit)
                                 continue;
                             else
                                 break;
@@ -1704,7 +1771,8 @@ namespace UADRealism
                         continue;
 
                     // These count as part of armament so need to get installed later.
-                    if (!_this._isRefitMode_5__2)
+                    isRefitMode = GetFieldValue<bool>("_isRefitMode_5__2");
+            if (!isRefitMode)
                     {
                         if (ct.name == "mines")
                         {
@@ -1749,7 +1817,8 @@ namespace UADRealism
                 // show up unless there are gun parts on the ship.
                 _baseHullWeight = _ship.Weight();
 
-                if (!_this._isRefitMode_5__2)
+                isRefitMode = GetFieldValue<bool>("_isRefitMode_5__2");
+            if (!isRefitMode)
                 {
                     if (mines != null)
                         InstallRandomComponentForType(mines);
@@ -1785,10 +1854,10 @@ namespace UADRealism
 
         private bool InitParts()
         {
-            if (_this.isSimpleRefit)
+            if (isSimpleRefit)
                 return true;
 
-            _randParts = RandPartInfo.GetRPIs(_ship, _this._isRefitMode_5__2);
+            _randParts = RandPartInfo.GetRPIs(_ship, isRefitMode);
             if (_randParts.Count == 0)
             {
                 // Log error?
@@ -2349,7 +2418,7 @@ namespace UADRealism
 
         public bool SelectParts()
         {
-            if (_this.isSimpleRefit)
+            if (isSimpleRefit)
                 return true;
 
             //SetupGunInfo();
@@ -2394,9 +2463,9 @@ namespace UADRealism
                         _ship.DeleteUnmounted(rp.type.ToString());
                         continue;
                     }
-                    else if (rp.deleteRefit && _this._isRefitMode_5__2)
+                    else if (rp.deleteRefit && isRefitMode)
                     {
-                        _ship.RemoveDeleteRefitPartsNew(rp.type.ToString(), _this.isSimpleRefit);
+                        _ship.RemoveDeleteRefitPartsNew(rp.type.ToString(), isSimpleRefit);
                         continue;
                     }
 

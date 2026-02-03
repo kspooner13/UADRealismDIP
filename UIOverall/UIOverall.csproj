@@ -1,0 +1,110 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>UIOverall</RootNamespace>
+    <AssemblyName>UIOverall</AssemblyName>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <!-- Set to false if the game does not ship UnityEngine.UIElementsModule.dll (UI Toolkit). -->
+    <UseUIToolkit>true</UseUIToolkit>
+    <DefineConstants Condition="'$(UseUIToolkit)' == 'true'">$(DefineConstants);USE_UI_TOOLKIT</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\net6\0Harmony.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\Assembly-CSharp.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Il2CppInterop.Runtime">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\net6\Il2CppInterop.Runtime.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Il2Cppmscorlib">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\Il2Cppmscorlib.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Il2CppSystem">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\Il2CppSystem.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Il2CppSystem.Core">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\Il2CppSystem.Core.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="MelonLoader">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\net6\MelonLoader.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\UnityEngine.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\UnityEngine.UI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>$(ProjectDir)ref\UnityEngine.UIModule.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputModule">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\UnityEngine.InputModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.ImageConversionModule">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\UnityEngine.ImageConversionModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\Unity.TextMeshPro.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <!-- Unity UI Toolkit (UIElements) from ref folder. Game does not ship these; we package them with the mod. -->
+    <Reference Include="UnityEngine.UIElementsModule" Condition="'$(UseUIToolkit)' == 'true'">
+      <HintPath>$(ProjectDir)ref\UnityEngine.UIElementsModule.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Package UI Toolkit DLLs with the mod so the game can load them (game has no native UI Toolkit). -->
+  <ItemGroup Condition="'$(UseUIToolkit)' == 'true'">
+    <None Include="$(ProjectDir)ref\UnityEngine.UIModule.dll" CopyToOutputDirectory="PreserveNewest" Link="UnityEngine.UIModule.dll" />
+    <None Include="$(ProjectDir)ref\UnityEngine.UIElementsModule.dll" CopyToOutputDirectory="PreserveNewest" Link="UnityEngine.UIElementsModule.dll" />
+  </ItemGroup>
+
+  <!-- UI Toolkit source generators from ref folder (optional; for UXML/code gen if needed). -->
+  <ItemGroup Condition="'$(UseUIToolkit)' == 'true'">
+    <Analyzer Include="$(ProjectDir)ref\Unity.UIToolkit.SourceGenerator.dll" />
+    <Analyzer Include="$(ProjectDir)ref\Unity.Properties.SourceGenerator.dll" />
+    <Analyzer Include="$(ProjectDir)ref\Unity.SourceGenerators.dll" />
+  </ItemGroup>
+
+  <!-- Copy mod and UI Toolkit DLLs to game Mods folder so the game can load them. Ignore failure when path differs. -->
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="copy /y $(TargetPath) &quot;C:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\Mods\UIOverall.dll&quot;" IgnoreExitCode="true" />
+    <Exec Command="copy /y $(TargetDir)UnityEngine.UIModule.dll &quot;C:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\Mods\UnityEngine.UIModule.dll&quot;" IgnoreExitCode="true" Condition="'$(UseUIToolkit)' == 'true'" />
+    <Exec Command="copy /y $(TargetDir)UnityEngine.UIElementsModule.dll &quot;C:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\Mods\UnityEngine.UIElementsModule.dll&quot;" IgnoreExitCode="true" Condition="'$(UseUIToolkit)' == 'true'" />
+  </Target>
+</Project>

@@ -6,91 +6,92 @@
     <Nullable>enable</Nullable>
     <Company>NathanKell</Company>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+     <OutputPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\Mods\</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>
     <Reference Include="0Harmony">
-      <HintPath>G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\MelonLoader\net6\0Harmony.dll</HintPath>
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\net6\0Harmony.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp">
-      <HintPath>G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\MelonLoader\Il2CppAssemblies\Assembly-CSharp.dll</HintPath>
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp-firstpass">
-      <HintPath>G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\MelonLoader\Il2CppAssemblies\Assembly-CSharp-firstpass.dll</HintPath>
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
     <Reference Include="Il2CppInterop.Runtime">
-      <HintPath>G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\MelonLoader\net6\Il2CppInterop.Runtime.dll</HintPath>
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\net6\Il2CppInterop.Runtime.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Il2CppMessagePack">
-      <HintPath>G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\MelonLoader\Il2CppAssemblies\Il2CppMessagePack.dll</HintPath>
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\Il2CppMessagePack.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Il2Cppmscorlib">
-      <HintPath>G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\MelonLoader\Il2CppAssemblies\Il2Cppmscorlib.dll</HintPath>
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\Il2Cppmscorlib.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Il2CppNewtonsoft.Json">
-      <HintPath>G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\MelonLoader\Il2CppAssemblies\Il2CppNewtonsoft.Json.dll</HintPath>
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\Il2CppNewtonsoft.Json.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Il2CppSystem">
-      <HintPath>G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\MelonLoader\Il2CppAssemblies\Il2CppSystem.dll</HintPath>
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\Il2CppSystem.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Il2CppSystem.Core">
-      <HintPath>G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\MelonLoader\Il2CppAssemblies\Il2CppSystem.Core.dll</HintPath>
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\Il2CppSystem.Core.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="MelonLoader">
-      <HintPath>G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\MelonLoader\net6\MelonLoader.dll</HintPath>
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\net6\MelonLoader.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.TextMeshPro">
-      <HintPath>G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\MelonLoader\Il2CppAssemblies\Unity.TextMeshPro.dll</HintPath>
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\Unity.TextMeshPro.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\MelonLoader\Il2CppAssemblies\UnityEngine.dll</HintPath>
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.ImageConversionModule">
-      <HintPath>G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\MelonLoader\Il2CppAssemblies\UnityEngine.ImageConversionModule.dll</HintPath>
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\UnityEngine.ImageConversionModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.IMGUIModule">
-      <HintPath>G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\MelonLoader\Il2CppAssemblies\UnityEngine.IMGUIModule.dll</HintPath>
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\UnityEngine.IMGUIModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.InputLegacyModule">
-      <HintPath>G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\MelonLoader\Il2CppAssemblies\UnityEngine.InputLegacyModule.dll</HintPath>
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\UnityEngine.InputLegacyModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.InputModule">
-      <HintPath>G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\MelonLoader\Il2CppAssemblies\UnityEngine.InputModule.dll</HintPath>
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\UnityEngine.InputModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.Physics2DModule">
-      <HintPath>G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\MelonLoader\Il2CppAssemblies\UnityEngine.Physics2DModule.dll</HintPath>
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\UnityEngine.Physics2DModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.PhysicsModule">
-      <HintPath>G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\MelonLoader\Il2CppAssemblies\UnityEngine.PhysicsModule.dll</HintPath>
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\UnityEngine.PhysicsModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.TextRenderingModule">
-      <HintPath>G:\Games\Steam\steamapps\common\From The Depths\From_The_Depths_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\UnityEngine.TextRenderingModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI">
-      <HintPath>G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\MelonLoader\Il2CppAssemblies\UnityEngine.UI.dll</HintPath>
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\UnityEngine.UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.UIModule">
-      <HintPath>G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\MelonLoader\Il2CppAssemblies\UnityEngine.UIModule.dll</HintPath>
+      <HintPath>F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\MelonLoader\Il2CppAssemblies\UnityEngine.UIModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
@@ -100,7 +101,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="copy /Y &quot;$(TargetDir)TweaksAndFixes.dll&quot; &quot;G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\Mods\TweaksAndFixes.dll&quot;&#xD;&#xA;copy /Y &quot;$(TargetDir)TweaksAndFixes.dll&quot; &quot;$(ProjectDir)\TAF_Nightly\TweaksAndFixes.dll&quot;&#xD;&#xA;rd /Q /S &quot;G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\Mods\TAFData&quot;&#xD;&#xA;xcopy /Y /S &quot;$(ProjectDir)\Assets\*&quot; &quot;G:\Games\Steam\steamapps\common\Ultimate Admiral Dreadnoughts\Mods\&quot;" />
+    <Exec Command="copy /Y &quot;$(TargetDir)TweaksAndFixes.dll&quot; &quot;F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\Mods\TweaksAndFixes.dll&quot;&#xD;&#xA;copy /Y &quot;$(TargetDir)TweaksAndFixes.dll&quot; &quot;F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\Mods\TAFData&quot;&#xD;&#xA;xcopy /Y /S &quot;$(ProjectDir)\Assets\*&quot; &quot;F:\Games\Ultimate.Admiral.Dreadnoughts.1.7.0.0\game\Mods\&quot;" />
   </Target>
 
 </Project>
