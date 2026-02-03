@@ -18,15 +18,19 @@ using Il2CppUiExt;
 
 namespace TweaksAndFixes
 {
-    public class UiM_s
+    public class CheatMenu
     {
         public static void Start()
         {
-            Melon<TweaksAndFixes>.Logger.Msg("UiM_s.Start");
+
 
             
-
-            SetupCheatMenu();
+            int cheatMenuEnabled = Config.Param("taf_cheatMenuEnabled", 0);
+            if (cheatMenuEnabled == 1)
+            {
+                Melon<TweaksAndFixes>.Logger.Msg("Cheat Menu Enabled");
+                SetupCheatMenu();
+            }
         }
         //CheatMenu
         // Global/Ui/UiMain/Common/Options/ (For the location of the top right buttons)
