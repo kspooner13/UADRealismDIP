@@ -69,6 +69,17 @@ namespace Spy
                     buttonText.text = "Intel";
             }
 
+            Sprite? intelSprite = LoadIntelSprite();
+            if (intelSprite != null)
+            {
+                GameObject? imageChild = buttonObj.GetChild("Image", true);
+                if (imageChild != null && imageChild.TryGetComponent<Image>(out var img))
+                {
+                    img.sprite = intelSprite;
+                    img.preserveAspect = true;
+                }
+            }
+
             Button? button = buttonObj.GetComponent<Button>();
             if (button != null)
             {
@@ -725,6 +736,41 @@ namespace Spy
             var c = go.GetComponent<T>();
             if (c != null)
                 UnityEngine.Object.Destroy(c);
+        }
+
+        /// <summary>Load the game's intel.png sprite from cache or Resources.</summary>
+        private static Sprite? LoadIntelSprite()
+        {
+            // 1. From game's resource cache (if already loaded)
+            if (Util.resCache != null)
+            {
+                try
+                {
+                    var cached = Util.resCache["intel"];
+                    if (cached != null)
+                    {
+                        var s = cached.TryCast<Sprite>();
+                        if (s != null) return s;
+                    }
+                    cached = Util.resCache["intel.png"];
+                    if (cached != null)
+                    {
+                        var s = cached.TryCast<Sprite>();
+                        if (s != null) return s;
+                    }
+                }
+                catch { /* ignore */ }
+            }
+
+            // 2. Unity Resources (path relative to Resources folder, no extension)
+            Sprite? s2 = Resources.Load<Sprite>("intel");
+            if (s2 != null) return s2;
+
+            // 3. Game's ResourcesLoad wrapper
+            Sprite? s3 = Util.ResourcesLoad<Sprite>("intel", false);
+            if (s3 != null) return s3;
+
+            return null;
         }
     }
 }

@@ -28,7 +28,7 @@ namespace TweaksAndFixes
             int cheatMenuEnabled = Config.Param("taf_cheatMenuEnabled", 0);
             if (cheatMenuEnabled == 1)
             {
-                Melon<TweaksAndFixes>.Logger.Msg("Cheat Menu Enabled");
+                Melon<TweaksAndFixes>.Logger.Msg("Cheat Menu Enabled - Dirty Cheater");
                 SetupCheatMenu();
             }
         }
@@ -36,6 +36,7 @@ namespace TweaksAndFixes
         // Global/Ui/UiMain/Common/Options/ (For the location of the top right buttons)
         // Global/Ui/UiMain/Popup/Generic
         private static GameObject cheatMenuEvent;
+        private static Button _cheatMenuButton;
 
         private static Player cheatPlayer;
         private static float currentAmount;
@@ -51,33 +52,40 @@ namespace TweaksAndFixes
             cheatMenuButton.name = "CheatMenuButton";
             cheatMenuButton.SetActive(true);
 
-            string spritePath = Path.Combine(Config._BasePath, "Sprites", "cheat_btn.png");
-            MelonLoader.MelonLogger.Msg("SpritePath: " + spritePath);
-            if (File.Exists(spritePath))
+            Sprite sprite = TryLoadCheatButtonSpriteFromGame();
+            if (sprite == null)
             {
-                byte[] rawData = File.ReadAllBytes(spritePath);
-                var tex = new Texture2D(2, 2, TextureFormat.DXT5, true);
-                if (ImageConversion.LoadImage(tex, rawData))
+                string spritePath = Path.Combine(Config._BasePath, "Sprites", "cheat_btn.png");
+                MelonLoader.MelonLogger.Msg("SpritePath: " + spritePath);
+                if (File.Exists(spritePath))
                 {
-                    Sprite sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
-                    Outline outline = cheatMenuButton.AddComponent<Outline>();
-                    outline.effectColor = Color.white;
-                    outline.effectDistance = new Vector2(1, 1);
-                    Transform imageChild = cheatMenuButton.transform.Find("Image");
-                    MelonLoader.MelonLogger.Msg("ImageChild: " + imageChild.name);
-                    MelonLoader.MelonLogger.Msg("Sprite: " + sprite.name);
-                    MelonLoader.MelonLogger.Msg("CheatMenuButton: " + cheatMenuButton.name);
-                    if (imageChild != null && imageChild.TryGetComponent<Image>(out var img))
-                    {
-                        img.sprite = sprite;
-                        img.preserveAspect = true;
-                    }
+                    byte[] rawData = File.ReadAllBytes(spritePath);
+                    var tex = new Texture2D(2, 2, TextureFormat.DXT5, true);
+                    if (ImageConversion.LoadImage(tex, rawData))
+                        sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+                }
+            }
+
+            if (sprite != null)
+            {
+                Outline outline = cheatMenuButton.AddComponent<Outline>();
+                outline.effectColor = Color.white;
+                outline.effectDistance = new Vector2(1, 1);
+                Transform imageChild = cheatMenuButton.transform.Find("Image");
+                MelonLoader.MelonLogger.Msg("ImageChild: " + imageChild.name);
+                MelonLoader.MelonLogger.Msg("Sprite: " + sprite.name);
+                MelonLoader.MelonLogger.Msg("CheatMenuButton: " + cheatMenuButton.name);
+                if (imageChild != null && imageChild.TryGetComponent<Image>(out var img))
+                {
+                    img.sprite = sprite;
+                    img.preserveAspect = true;
                 }
             }
 
             Button btn = cheatMenuButton.GetComponent<Button>();
             if (btn != null)
             {
+                _cheatMenuButton = btn;
                 btn.onClick.AddListener(new System.Action(() =>
                 {
                     if (GameManager.IsCampaign)
@@ -88,21 +96,54 @@ namespace TweaksAndFixes
                         BattleCheatMenu();
                 }));
             }
-        }       
+        }
+
+        /// <summary>Tries to load the cheat button sprite from the game's assets; returns null if not found.</summary>
+        private static Sprite TryLoadCheatButtonSpriteFromGame()
+        {
+
+            var item = UnityEngine.Resources.Load<Sprite>("tabs/intel");
+            if (item != null) {
+
+                Sprite sprite = item.TryCast<Sprite>();
+                if (sprite != null) return sprite;
+            }
+            return null;
+        }
+
         public static void CampaignCheatMenu()
         {
-            // Clone already has Window with RectTransform, VerticalLayoutGroup, ContentSizeFitter. Only update the buttons.
+            // Only open on world map to avoid NullRef in game's NewGameUI (event system hits null when popup opens during new-game flow).
+
             MelonLoader.MelonLogger.Msg("CampaignCheatMenu");
             cheatPlayer = ExtraGameData.MainPlayer();
             GameObject popupTemplate = ModUtils.GetChildAtPath("Global/Ui/UiMain/Popup/PopupMenu");
+            if (popupTemplate == null)
+            {
+                Melon<TweaksAndFixes>.Logger.Error("CampaignCheatMenu: PopupMenu template not found.");
+                return;
+            }
+            GameObject popWindows = ModUtils.GetChildAtPath("Global/Ui/UiMain/WorldEx/PopWindows");
+            if (popWindows == null)
+            {
+                Melon<TweaksAndFixes>.Logger.Error("CampaignCheatMenu: PopWindows not found.");
+                return;
+            }
 
             cheatMenuEvent = GameObject.Instantiate(popupTemplate);
-            cheatMenuEvent.transform.SetParent(ModUtils.GetChildAtPath("Global/Ui/UiMain/WorldEx/PopWindows"));
+            cheatMenuEvent.transform.SetParent(popWindows);
             cheatMenuEvent.name = "Cheat Menu";
             cheatMenuEvent.transform.SetScale(1, 1, 1);
             cheatMenuEvent.transform.localPosition = Vector3.zero;
 
             GameObject window = cheatMenuEvent.GetChild("Window");
+            if (window == null)
+            {
+                Melon<TweaksAndFixes>.Logger.Error("CampaignCheatMenu: Window not found on popup.");
+                cheatMenuEvent.TryDestroy();
+                cheatMenuEvent = null;
+                return;
+            }
 
             void SetButton(GameObject btn, string label, System.Action onPress)
             {
@@ -123,7 +164,11 @@ namespace TweaksAndFixes
                         return;
                     }
                     if (label == "Close"){
-                        b.onClick.AddListener(new System.Action(() => { cheatMenuEvent.SetActive(false); }));
+                        b.onClick.AddListener(new System.Action(() =>
+                        {
+                            cheatMenuEvent.SetActive(false);
+                            if (_cheatMenuButton != null) _cheatMenuButton.interactable = true;
+                        }));
 
                     }
                     else{
@@ -162,6 +207,7 @@ namespace TweaksAndFixes
             if (header != null) header.GetComponent<TMP_Text>().text = "Campaign Cheats";
 
             cheatMenuEvent.SetActive(true);
+            if (_cheatMenuButton != null) _cheatMenuButton.interactable = false;
         }
 
         public static void CampaignCheatMenu2()
@@ -261,7 +307,7 @@ namespace TweaksAndFixes
                     
                 }
                 else if (ship.isDesign != null) {
-                    MelonLoader.MelonLogger.Msg("Ship " + ship.name + " is a design and is not building " + ship.isBuilding + " and is design " + ship.isDesign + " id " + ship.id);
+                   // MelonLoader.MelonLogger.Msg("Ship " + ship.name + " is a design and is not building " + ship.isBuilding + " and is design " + ship.isDesign + " id " + ship.id);
                 }
             }
 
@@ -287,7 +333,7 @@ namespace TweaksAndFixes
                     
                 }
                 else if (ship.isDesign != null) {
-                    MelonLoader.MelonLogger.Msg("Ship " + ship.name + " is a design and is not repairing " + ship.isRepairing + " and is design " + ship.isDesign + " id " + ship.id);
+                //    MelonLoader.MelonLogger.Msg("Ship " + ship.name + " is a design and is not repairing " + ship.isRepairing + " and is design " + ship.isDesign + " id " + ship.id);
                 }
             }
             //FutureOptions??  isRepairing is readonly.
