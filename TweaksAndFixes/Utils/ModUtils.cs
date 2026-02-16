@@ -47,6 +47,23 @@ namespace TweaksAndFixes
         // instead of allocating each time.
         public static Il2CppSystem.Nullable<int>  _NullableEmpty_Int = new Il2CppSystem.Nullable<int>();
 
+        /// <summary>Log all public instance/static fields and methods for an object so we can see what to manipulate.</summary>
+        public static void DumpTypeFieldsAndMethods(string label, object obj)
+        {
+            if (obj == null) { MelonLoader.MelonLogger.Msg($"[{label}] null"); return; }
+            Type t = obj.GetType();
+            MelonLoader.MelonLogger.Msg($"[{label}] Type: {t.FullName}");
+            const BindingFlags bf = BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.FlattenHierarchy;
+            foreach (FieldInfo f in t.GetFields(bf))
+                MelonLoader.MelonLogger.Msg($"  Field: {f.FieldType.Name} {f.Name}");
+            foreach (MethodInfo m in t.GetMethods(bf))
+            {
+                if (m.IsSpecialName && (m.Name.StartsWith("get_") || m.Name.StartsWith("set_"))) continue;
+                var ps = m.GetParameters();
+                string pstr = ps.Length == 0 ? "" : "(" + string.Join(", ", System.Linq.Enumerable.Select(ps, p => p.ParameterType.Name + " " + p.Name)) + ")";
+                MelonLoader.MelonLogger.Msg($"  Method: {m.ReturnType.Name} {m.Name}{pstr}");
+            }
+        }
         public class SaveTextureToFileUtility
         {
             public enum SaveTextureFileFormat

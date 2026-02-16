@@ -26,20 +26,27 @@ namespace Spy
         /// <summary>Intel level per country name (e.g. "United States" -> "Limited"). Default "Unknown".</summary>
         private static readonly Dictionary<string, string> IntelLevelByCountry = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
+        /// <summary>True after the Intel button and window have been created (avoids re-running from Update every frame).</summary>
+        public static bool IsInitialized => _initialized;
+
         public static void Initialize()
         {
+            if (!GameManager.IsCampaign || CampaignController.Instance == null)
+                return;
             if (_initialized)
                 return;
 
+            MelonLogger.Msg("[IntelUI] Initializing...");
             CreateOpenButton();
             CreateWindow();
-
             _initialized = true;
             MelonLogger.Msg("[IntelUI] Initialized.");
         }
 
         private static void CreateOpenButton()
         {
+            MelonLoader.MelonLogger.Msg("CreateOpenButton");
+        
             GameObject? buttonsParent = TweaksAndFixes.ModUtils.GetChildAtPath(CampaignTopPanelPath);
             if (buttonsParent == null)
             {
@@ -69,16 +76,6 @@ namespace Spy
                     buttonText.text = "Intel";
             }
 
-            Sprite? intelSprite = LoadIntelSprite();
-            if (intelSprite != null)
-            {
-                GameObject? imageChild = buttonObj.GetChild("Image", true);
-                if (imageChild != null && imageChild.TryGetComponent<Image>(out var img))
-                {
-                    img.sprite = intelSprite;
-                    img.preserveAspect = true;
-                }
-            }
 
             Button? button = buttonObj.GetComponent<Button>();
             if (button != null)
@@ -88,10 +85,29 @@ namespace Spy
             }
 
             _buttonRoot = buttonObj;
+
+            // When user clicks another tab (Fleet, Politics, etc.), hide Intel so tabs are always usable.
+            AddHideIntelToOtherTabButtons(buttonsParent);
+            MelonLoader.MelonLogger.Msg("CreateOpenButton done");
+        }
+
+        /// <summary>Add a listener to Fleet, Politics, etc. so clicking another tab hides Intel and keeps tabs usable.</summary>
+        private static void AddHideIntelToOtherTabButtons(GameObject buttonsParent)
+        {
+            if (buttonsParent == null || _buttonRoot == null) return;
+            for (int i = 0; i < buttonsParent.transform.childCount; i++)
+            {
+                Transform t = buttonsParent.transform.GetChild(i);
+                if (t == null || t.gameObject == _buttonRoot) continue;
+                Button? btn = t.gameObject.GetComponent<Button>();
+                if (btn != null)
+                    btn.onClick.AddListener(new Action(HideWindow));
+            }
         }
 
         private static void CreateWindow()
         {
+            MelonLoader.MelonLogger.Msg("CreateWindow");
             if (G.ui?.FleetWindow?.Root == null)
             {
                 MelonLogger.Warning("[IntelUI] FleetWindow not available for cloning.");
@@ -99,11 +115,27 @@ namespace Spy
             }
 
             _windowRoot = UnityEngine.Object.Instantiate(G.ui.FleetWindow.Root);
-            _windowRoot.name = "IntelWindow";
-            _windowRoot.transform.SetParent(G.ui.gameObject.transform, false);
+            _windowRoot.name = "Intel Window";
+            // Parent under WorldEx/Windows like Fleet/Politics so we sit in the same area and the tab bar stays clickable.
+            GameObject? windowsParent = TweaksAndFixes.ModUtils.GetChildAtPath("Global/Ui/UiMain/WorldEx/Windows");
+            if (windowsParent != null)
+                _windowRoot.transform.SetParent(windowsParent.transform, false);
+            else
+                _windowRoot.transform.SetParent(G.ui.gameObject.transform, false);
             _windowRoot.transform.localScale = Vector3.one;
             _windowRoot.transform.localPosition = Vector3.zero;
             _windowRoot.SetActive(false);
+
+            // Force window to fill the same area as Fleet/Politics so all content is inside one visible window (not fragmented).
+            RectTransform? windowRect = _windowRoot.GetComponent<RectTransform>();
+            if (windowRect != null)
+            {
+                windowRect.anchorMin = Vector2.zero;
+                windowRect.anchorMax = Vector2.one;
+                windowRect.pivot = new Vector2(0.5f, 0.5f);
+                windowRect.offsetMin = Vector2.zero;
+                windowRect.offsetMax = Vector2.zero;
+            }
 
             var cfw = _windowRoot.GetComponent<CampaignFleetWindow>();
             if (cfw != null)
@@ -116,24 +148,24 @@ namespace Spy
                 return;
             }
 
-            // Fixed-size root so background doesn't overflow (no stretch, no empty space below content)
+            // Root fills the window so Border and all panels (header, left panel, table, buttons) are inside one unified area.
             RectTransform rootRect = root.GetComponent<RectTransform>();
             if (rootRect != null)
             {
-                rootRect.anchorMin = new Vector2(0.5f, 0.5f);
-                rootRect.anchorMax = new Vector2(0.5f, 0.5f);
+                rootRect.anchorMin = Vector2.zero;
+                rootRect.anchorMax = Vector2.one;
                 rootRect.pivot = new Vector2(0.5f, 0.5f);
-                rootRect.sizeDelta = new Vector2(1600f, 720f);
                 rootRect.offsetMin = Vector2.zero;
                 rootRect.offsetMax = Vector2.zero;
             }
 
-            // Remove every original child of root so no ship-building / fleet UI shows (destroy to avoid stray text/layout)
+            // Remove every original child of root so no ship-building / fleet UI shows.
+            // Use DestroyImmediate so they are gone before we add our panels (Destroy is deferred and left old content visible).
             while (root.transform.childCount > 0)
             {
                 Transform t = root.transform.GetChild(0);
                 if (t != null && t.gameObject != null)
-                    UnityEngine.Object.Destroy(t.gameObject);
+                    UnityEngine.Object.DestroyImmediate(t.gameObject);
             }
             // Hide any other direct children of the window so no Fleet window title/header leaks
             if (_windowRoot != null)
@@ -146,17 +178,128 @@ namespace Spy
                 }
             }
 
+            // Match Fleet Design Window layout: Border, top bar (like Shipbuilding Capacity), table header, left panel, table, bottom buttons, Close
+            CreateBorder(root);
+            CreateIntelTopBar(root);
+            CreateIntelHeader(root);
             CreateIntelEstimatesPanel(root);
             CreateSpiesListPanel(root);
             CreateIntelBottomButtons(root);
             CreateCloseButton(root);
+            MelonLoader.MelonLogger.Msg("CreateWindow done");
+        }
+
+        private const float IntelHeaderHeight = 36f;
+        private const float IntelTopBarHeight = 28f;
+
+        /// <summary>Border around the window content (like Fleet Design Window Root/Border).</summary>
+        private static void CreateBorder(GameObject root)
+        {
+            GameObject border = new GameObject("Border");
+            border.transform.SetParent(root.transform, false);
+            border.transform.SetAsFirstSibling();
+            border.transform.localScale = Vector3.one;
+            border.SetActive(true);
+
+            RectTransform borderRect = border.AddComponent<RectTransform>();
+            borderRect.anchorMin = Vector2.zero;
+            borderRect.anchorMax = Vector2.one;
+            borderRect.pivot = new Vector2(0.5f, 0.5f);
+            borderRect.offsetMin = Vector2.zero;
+            borderRect.offsetMax = Vector2.zero;
+
+            Image borderImage = border.AddComponent<Image>();
+            borderImage.color = new Color(0.08f, 0.08f, 0.1f, 0.98f);
+            Outline borderOutline = border.AddComponent<Outline>();
+            borderOutline.effectColor = new Color(0.3f, 0.3f, 0.35f, 1f);
+            borderOutline.effectDistance = new Vector2(2f, 2f);
+        }
+
+        /// <summary>Top bar like Fleet Design Window "Shipbuilding Capacity" - title so layout matches.</summary>
+        private static void CreateIntelTopBar(GameObject root)
+        {
+            GameObject topBar = new GameObject("Intel Top Bar");
+            topBar.transform.SetParent(root.transform, false);
+            topBar.transform.localScale = Vector3.one;
+            topBar.SetActive(true);
+
+            RectTransform topRect = topBar.AddComponent<RectTransform>();
+            topRect.anchorMin = new Vector2(0f, 1f);
+            topRect.anchorMax = new Vector2(1f, 1f);
+            topRect.pivot = new Vector2(0.5f, 1f);
+            topRect.offsetMin = new Vector2(0f, -IntelTopBarHeight);
+            topRect.offsetMax = Vector2.zero;
+            LayoutElement le = topBar.AddComponent<LayoutElement>();
+            le.preferredHeight = IntelTopBarHeight;
+            le.flexibleHeight = 0f;
+
+            Image topBg = topBar.AddComponent<Image>();
+            topBg.color = new Color(0.1f, 0.1f, 0.12f, 0.95f);
+
+            GameObject label = new GameObject("Label");
+            label.transform.SetParent(topBar.transform, false);
+            RectTransform labelRect = label.AddComponent<RectTransform>();
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = new Vector2(12f, 2f);
+            labelRect.offsetMax = new Vector2(-12f, -2f);
+            TextMeshProUGUI tmp = label.AddComponent<TextMeshProUGUI>();
+            tmp.text = "Intel";
+            tmp.fontSize = 14f;
+            tmp.fontStyle = FontStyles.Bold;
+            tmp.alignment = TextAlignmentOptions.Left;
+        }
+
+        /// <summary>Single header row with column labels (like Fleet Design Window Design Header: HorizontalLayoutGroup, Image, Outline).</summary>
+        private static void CreateIntelHeader(GameObject root)
+        {
+            GameObject header = new GameObject("Intel Header");
+            header.transform.SetParent(root.transform, false);
+            header.transform.localScale = Vector3.one;
+            header.SetActive(true);
+
+            RectTransform headerRect = header.AddComponent<RectTransform>();
+            headerRect.anchorMin = new Vector2(0f, 1f);
+            headerRect.anchorMax = new Vector2(1f, 1f);
+            headerRect.pivot = new Vector2(0.5f, 1f);
+            // Align with Spies table area (to the right of Intel Estimates panel)
+            headerRect.offsetMin = new Vector2(IntelEstimatesPanelWidth + 8f, -(IntelTopBarHeight + IntelHeaderHeight));
+            headerRect.offsetMax = new Vector2(-20f, -IntelTopBarHeight);
+            LayoutElement headerLe = header.AddComponent<LayoutElement>();
+            headerLe.preferredHeight = IntelHeaderHeight;
+            headerLe.flexibleHeight = 0f;
+
+            HorizontalLayoutGroup hlg = header.AddComponent<HorizontalLayoutGroup>();
+            hlg.spacing = 6f;
+            hlg.childForceExpandHeight = true;
+            hlg.childForceExpandWidth = false;
+            hlg.childControlWidth = true;
+            var pad = hlg.padding;
+            pad.left = 8; pad.right = 8; pad.top = 4; pad.bottom = 4;
+            hlg.padding = pad;
+
+            Image headerBg = header.AddComponent<Image>();
+            headerBg.color = new Color(0.12f, 0.12f, 0.14f, 0.98f);
+            Outline headerOutline = header.AddComponent<Outline>();
+            headerOutline.effectColor = new Color(0.25f, 0.25f, 0.3f, 1f);
+            headerOutline.effectDistance = new Vector2(0f, 1f);
+
+            AddHeaderColumn(header, "Name", ColName);
+            AddHeaderColumn(header, "Yrs", ColYrsActive);
+            AddHeaderColumn(header, "Success", ColSuccess);
+            AddHeaderColumn(header, "Failed", ColFailed);
+            AddHeaderColumn(header, "Exp", ColExpLvl);
+            AddHeaderColumn(header, "Sneak", ColSneakiness);
+            AddHeaderColumn(header, "Eff", ColEfficiency);
+            AddHeaderColumn(header, "Plan", ColPlanning);
+            AddHeaderColumn(header, "Status", ColStatus);
         }
 
         private const float IntelEstimatesPanelWidth = 300f;
 
         private static void CreateIntelEstimatesPanel(GameObject root)
         {
-            GameObject panel = new GameObject("Intel Estimates Panel");
+            GameObject panel = new GameObject("Intel Estimates");
             panel.transform.SetParent(root.transform, false);
             panel.transform.SetAsLastSibling();
             panel.transform.localScale = Vector3.one;
@@ -168,7 +311,7 @@ namespace Spy
             panelRect.anchorMax = new Vector2(0f, 1f);
             panelRect.pivot = new Vector2(0f, 0.5f);
             panelRect.offsetMin = new Vector2(0f, -360f);
-            panelRect.offsetMax = new Vector2(IntelEstimatesPanelWidth, -70f);
+            panelRect.offsetMax = new Vector2(IntelEstimatesPanelWidth, -(IntelTopBarHeight + IntelHeaderHeight));
             LayoutElement le = panel.AddComponent<LayoutElement>();
             le.preferredWidth = IntelEstimatesPanelWidth;
             le.flexibleWidth = 0f;
@@ -235,48 +378,9 @@ namespace Spy
             CreateSpiesListPanelFallback(root);
         }
 
-        private static void CreateSpiesColumnHeader(GameObject tablePanel)
-        {
-            if (tablePanel == null) return;
-
-            GameObject columnHeader = new GameObject("Spies Column Header");
-            columnHeader.transform.SetParent(tablePanel.transform, false);
-            columnHeader.transform.SetAsLastSibling(); // draw on top of scroll area
-
-            RectTransform colHeaderRect = columnHeader.AddComponent<RectTransform>();
-            colHeaderRect.anchorMin = new Vector2(0f, 1f);
-            colHeaderRect.anchorMax = new Vector2(1f, 1f);
-            colHeaderRect.pivot = new Vector2(0.5f, 1f);
-            colHeaderRect.offsetMin = new Vector2(0f, -SpiesHeaderHeight);
-            colHeaderRect.offsetMax = new Vector2(0f, 0f);
-            LayoutElement headerLe = columnHeader.AddComponent<LayoutElement>();
-            headerLe.preferredHeight = SpiesHeaderHeight;
-            headerLe.flexibleHeight = 0f;
-
-            HorizontalLayoutGroup colHlg = columnHeader.AddComponent<HorizontalLayoutGroup>();
-            colHlg.spacing = 6f;
-            colHlg.childForceExpandHeight = true;
-            colHlg.childForceExpandWidth = false;
-            colHlg.childControlWidth = true;
-            RectOffset pad = colHlg.padding;
-            pad.left = 8; pad.right = 8; pad.top = 4; pad.bottom = 4;
-            colHlg.padding = pad;
-            AddHeaderColumn(columnHeader, "Name", ColName);
-            AddHeaderColumn(columnHeader, "Yrs", ColYrsActive);
-            AddHeaderColumn(columnHeader, "Success", ColSuccess);
-            AddHeaderColumn(columnHeader, "Failed", ColFailed);
-            AddHeaderColumn(columnHeader, "Exp", ColExpLvl);
-            AddHeaderColumn(columnHeader, "Sneak", ColSneakiness);
-            AddHeaderColumn(columnHeader, "Eff", ColEfficiency);
-            AddHeaderColumn(columnHeader, "Plan", ColPlanning);
-            AddHeaderColumn(columnHeader, "Status", ColStatus);
-        }
-
-        private const float SpiesHeaderHeight = 36f;
-
         private static void CreateSpiesListPanelFallback(GameObject root)
         {
-            GameObject panel = new GameObject("Spies List");
+            GameObject panel = new GameObject("Spies");
             panel.transform.SetParent(root.transform, false);
             panel.transform.SetAsLastSibling();
             panel.transform.localScale = Vector3.one;
@@ -287,19 +391,19 @@ namespace Spy
             panelRect.anchorMin = new Vector2(0f, 0f);
             panelRect.anchorMax = new Vector2(1f, 1f);
             panelRect.offsetMin = new Vector2(IntelEstimatesPanelWidth + 8f, -360f);
-            panelRect.offsetMax = new Vector2(-20f, -70f);
+            panelRect.offsetMax = new Vector2(-20f, -(IntelTopBarHeight + IntelHeaderHeight));
 
             Image panelBg = panel.AddComponent<Image>();
             panelBg.color = new Color(0.11f, 0.11f, 0.13f, 0.98f);
 
-            // Scroll view first (below header), then header drawn on top
+            // Scroll view fills panel (table header is root-level Intel Header, like Fleet Design Window)
             GameObject scrollObj = new GameObject("Scroll View");
             scrollObj.transform.SetParent(panel.transform, false);
             RectTransform scrollRectTrans = scrollObj.AddComponent<RectTransform>();
             scrollRectTrans.anchorMin = new Vector2(0f, 0f);
             scrollRectTrans.anchorMax = new Vector2(1f, 1f);
             scrollRectTrans.offsetMin = new Vector2(4f, 4f);
-            scrollRectTrans.offsetMax = new Vector2(-4f, -(SpiesHeaderHeight + 4f));
+            scrollRectTrans.offsetMax = new Vector2(-4f, -4f);
 
             ScrollRect scroll = scrollObj.AddComponent<ScrollRect>();
             scroll.horizontal = false;
@@ -339,9 +443,6 @@ namespace Spy
 
             scroll.content = contentRect;
             scroll.viewport = viewportRect;
-
-            // Column header at top of container (drawn on top of scroll)
-            CreateSpiesColumnHeader(panel);
         }
 
         private static void CreateIntelBottomButtons(GameObject root)
@@ -544,11 +645,26 @@ namespace Spy
 
         private static void ShowWindow()
         {
-            if (_windowRoot != null)
+            if (_windowRoot == null) return;
+
+            // Hide all campaign windows (Fleet, Politics, Map, etc.) so Intel is the active view, not an overlay.
+            HideOtherCampaignWindows();
+
+            _windowRoot.SetActive(true);
+            RefreshSpiesList();
+            RefreshIntelEstimates();
+        }
+
+        /// <summary>Hides all campaign windows under WorldEx/Windows (Fleet, Politics, Map, etc.) so Intel is the only visible window.</summary>
+        private static void HideOtherCampaignWindows()
+        {
+            GameObject? windowsParent = TweaksAndFixes.ModUtils.GetChildAtPath("Global/Ui/UiMain/WorldEx/Windows");
+            if (windowsParent == null) return;
+            for (int i = 0; i < windowsParent.transform.childCount; i++)
             {
-                _windowRoot.SetActive(true);
-                RefreshSpiesList();
-                RefreshIntelEstimates();
+                Transform child = windowsParent.transform.GetChild(i);
+                if (child != null && child.gameObject != null)
+                    child.gameObject.SetActive(false);
             }
         }
 
@@ -567,13 +683,13 @@ namespace Spy
         {
             if (_intelEstimatesContent == null) return;
 
-            // Clear existing rows (avoid Il2Cpp foreach cast – use index loop)
+            // Clear existing rows immediately so new content isn't drawn on top of old (Destroy is deferred).
             int childCount = _intelEstimatesContent.transform.childCount;
             for (int i = childCount - 1; i >= 0; i--)
             {
                 Transform t = _intelEstimatesContent.transform.GetChild(i);
                 if (t != null && t.gameObject != null)
-                    UnityEngine.Object.Destroy(t.gameObject);
+                    UnityEngine.Object.DestroyImmediate(t.gameObject);
             }
 
             if (CampaignController.Instance == null || CampaignController.Instance.CampaignData?.Players == null)
@@ -612,7 +728,8 @@ namespace Spy
             tmp.alignment = TextAlignmentOptions.Left;
         }
 
-        private static void HideWindow()
+        /// <summary>Hides the Intel window. Call when user switches to another tab so tabs stay accessible.</summary>
+        public static void HideWindow()
         {
             if (_windowRoot != null)
                 _windowRoot.SetActive(false);
@@ -649,13 +766,13 @@ namespace Spy
         {
             if (_spiesContent == null) return;
 
-            // Clear existing rows (keep Template if present, so cloned list structure stays intact)
+            // Clear existing rows immediately so new content isn't drawn on top of old (Destroy is deferred).
             int n = _spiesContent.transform.childCount;
             for (int i = n - 1; i >= 0; i--)
             {
                 Transform t = _spiesContent.transform.GetChild(i);
                 if (t != null && t.gameObject != null && t.gameObject.name != "Template" && !t.gameObject.name.Contains("Template"))
-                    UnityEngine.Object.Destroy(t.gameObject);
+                    UnityEngine.Object.DestroyImmediate(t.gameObject);
             }
 
             var actors = SpyActor.All;
@@ -739,38 +856,6 @@ namespace Spy
         }
 
         /// <summary>Load the game's intel.png sprite from cache or Resources.</summary>
-        private static Sprite? LoadIntelSprite()
-        {
-            // 1. From game's resource cache (if already loaded)
-            if (Util.resCache != null)
-            {
-                try
-                {
-                    var cached = Util.resCache["intel"];
-                    if (cached != null)
-                    {
-                        var s = cached.TryCast<Sprite>();
-                        if (s != null) return s;
-                    }
-                    cached = Util.resCache["intel.png"];
-                    if (cached != null)
-                    {
-                        var s = cached.TryCast<Sprite>();
-                        if (s != null) return s;
-                    }
-                }
-                catch { /* ignore */ }
-            }
-
-            // 2. Unity Resources (path relative to Resources folder, no extension)
-            Sprite? s2 = Resources.Load<Sprite>("intel");
-            if (s2 != null) return s2;
-
-            // 3. Game's ResourcesLoad wrapper
-            Sprite? s3 = Util.ResourcesLoad<Sprite>("intel", false);
-            if (s3 != null) return s3;
-
-            return null;
-        }
+       
     }
 }

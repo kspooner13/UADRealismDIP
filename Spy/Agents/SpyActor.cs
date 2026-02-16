@@ -51,28 +51,7 @@ namespace Spy
             Status = status ?? StatusAvailable;
         }
 
-        /// <summary>Start a mission: sets status On Mission and mission fields. Turns remaining until resolution.</summary>
-        public void StartMission(string missionType, int difficulty, int turnsUntilResolution, string targetCountry = "")
-        {
-            Status = StatusOnMission;
-            CurrentMissionType = missionType;
-            MissionDifficulty = Math.Clamp(difficulty, SpyMission.DifficultyMin, SpyMission.DifficultyMax);
-            TurnsRemaining = Math.Max(1, turnsUntilResolution);
-            TargetCountry = targetCountry ?? "";
-        }
 
-        /// <summary>Clear current mission fields and set status to Available (or leave Captured).</summary>
-        public void ClearMission(bool keepCaptured = true)
-        {
-            if (keepCaptured && Status == StatusCaptured)
-                return;
-            CurrentMissionType = "";
-            MissionDifficulty = SpyMission.DifficultyMin;
-            TurnsRemaining = 0;
-            TargetCountry = "";
-            if (Status != StatusCaptured)
-                Status = StatusAvailable;
-        }
 
         /// <summary>
         /// All active spy actors (in-memory registry; can be replaced with save/load later).

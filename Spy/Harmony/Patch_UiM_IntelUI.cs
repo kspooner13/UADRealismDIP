@@ -1,4 +1,5 @@
 using HarmonyLib;
+using Il2Cpp;
 
 namespace Spy.Harmony
 {
@@ -12,6 +13,9 @@ namespace Spy.Harmony
         [HarmonyPostfix]
         internal static void Postfix()
         {
+            // Only run when in campaign; otherwise campaign top panel may not exist and can freeze.
+            if (!GameManager.IsCampaign || CampaignController.Instance == null)
+                return;
             IntelUI.Initialize();
         }
     }

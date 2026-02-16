@@ -405,6 +405,11 @@ namespace TweaksAndFixes
 
         public static void SetLocalizedTextTag(GameObject ui, string tag)
         {
+            if (ui == null)
+            {
+                Melon<TweaksAndFixes>.Logger.Error("SetLocalizedTextTag: ui is null.");
+                return;
+            }
             LocalizeText localize = ui.GetComponent<LocalizeText>();
 
             if (localize == null)
@@ -450,6 +455,7 @@ namespace TweaksAndFixes
 
         public static void CreateLocalizedTextTag(GameObject ui, TextMeshProUGUI textElement, string tag)
         {
+
             LocalizeText localize = ui.AddComponent<LocalizeText>();
 
             localize.LocalizedElements.AddItem(new LocalizeText.LocalizedElement());
@@ -457,6 +463,7 @@ namespace TweaksAndFixes
             localize.LocalizedElements[0].Tag = tag;
             localize.LocalizedElements[0].DefaultText = "";
             localize.LocalizedElements[0].TextMeshPro = textElement;
+
         }
 
         public static void SetButtonOnClick(GameObject ui, System.Action action)
@@ -614,6 +621,66 @@ namespace TweaksAndFixes
             }
             return null;
         }
+        /// <summary>
+        /// Add a CreateButton function to create different button types and functions
+        /// Registers an update to keep the button enabled when the menu is shown (template or clone).
+        /// </summary>
+    
+        public static void CreateButton(GameObject parent, string type="", string name="", bool forceText=false, string text="", string textTag="", string tooltipTag="", System.Action onClick=null, int siblingIndex=0)
+        {
+            GameObject buttonTemplate = null;
+            if (type == "ButtonBase") {
+                // Base button template for the popup menu
+                buttonTemplate = ModUtils.GetChildAtPath("Global/Ui/UiMain/Popup/PopupMenu/Window/ButtonBase");
+            }
+            else if (type == "TopPanelButton") {
+                // Finances button from the top panel
+                buttonTemplate = ModUtils.GetChildAtPath("Global/Ui/UiMain/WorldEx/TopPanel/Tabs/Buttons/Finances");
+            }
+            else if (type == "WindowBottomButton") {
+                // Refit ship button from the fleet design window
+                buttonTemplate = ModUtils.GetChildAtPath("Global/Ui/UiMain/WorldEx/Windows/Fleet Design Window/Root/Design Buttons/Refit Ship");
+            }
+            else if (type == "PopupMenuButton") {
+                buttonTemplate = ModUtils.GetChildAtPath("Global/Ui/UiMain/Popup/PopupMenu/Window/SaveCampaign"); //Save button from the popup window
+            }
+            else {
+                Melon<TweaksAndFixes>.Logger.Error($"Unknown button type: {type}, using base");
+                buttonTemplate = ModUtils.GetChildAtPath("Global/Ui/UiMain/Popup/PopupMenu/Window/ButtonBase");
+            }
+
+            if (buttonTemplate == null) {
+                Melon<TweaksAndFixes>.Logger.Error($"Failed to get button template for {type}, using base");
+                return;
+            }
+            GameObject btn = GameObject.Instantiate(buttonTemplate);
+            //DefaultNull children and components
+
+            btn.transform.SetParent(parent as GameObject, false);
+            btn.name = name;
+            if (textTag != "") {
+                UiM.SetLocalizedTextTag(btn, textTag);
+            }
+            if (forceText) {
+                GameObject textObj = btn.GetChild("Text (TMP)");
+                if (textObj != null) {
+                    textObj.TryDestroyComponent<LocalizeText>();
+                    if (textObj.TryGetComponent(out TMP_Text tmp))
+                        tmp.text = text;
+                }
+            }
+            if (tooltipTag != "") {
+                AddTooltip(btn, tooltipTag);
+            }
+            if (onClick != null) {
+                SetButtonOnClick(btn, onClick);
+            }
+            if (siblingIndex >= 0) {
+                btn.transform.SetSiblingIndex(siblingIndex);
+            }
+            btn.SetActive(true);
+        }
+
 
         /// <summary>
         /// Add a "Load Game" button to the options menu (PopupMenu) after SaveCampaign; click opens the load-game popup.
@@ -691,6 +758,8 @@ namespace TweaksAndFixes
             ApplyDockyardModifications();
             
             AddLoadButton();
+            CheatMenu.Start();
+            MainMenu.Start();
 
             G.GameData.tooltips["file_converter"] = new TooltipData();
 
