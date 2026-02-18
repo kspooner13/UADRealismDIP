@@ -435,6 +435,7 @@ namespace TweaksAndFixes
                         break;
                     }
                     //DIP Mod Fix (its not fixed lol)
+                    /*
                     if (!pattern.IsMatch(techName) && categoryMatch) {
                         if (techName == "gun_sec" && priorityName == "gun_small") {
                             MelonLoader.MelonLogger.Msg("Tech " + techName + " (priority " + priorityName + ") is a small gun, setting to 99.9%");
@@ -472,6 +473,7 @@ namespace TweaksAndFixes
                             break;
                         }
                     }
+                    */
                 }
             }
         }
