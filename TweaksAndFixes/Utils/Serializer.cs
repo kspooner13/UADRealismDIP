@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using UnityEngine;
 using System.Text;
 using Il2Cpp;
@@ -149,6 +149,25 @@ namespace TweaksAndFixes
                     }
                 }
                 return allLines;
+            }
+
+            /// <summary>
+            /// Parse CSV text into rows of cells. Handles quoted fields and commas inside quotes.
+            /// </summary>
+            /// <param name="text">Raw CSV content.</param>
+            /// <param name="skipCommentLines">If true, rows whose first cell (trimmed) starts with '#' are omitted.</param>
+            /// <returns>List of rows, each row an array of cell strings.</returns>
+            public static List<string[]> ParseToRows(string text, bool skipCommentLines = false)
+            {
+                var parsed = ParseLines(text ?? string.Empty);
+                var result = new List<string[]>(parsed.Count);
+                foreach (var row in parsed)
+                {
+                    if (skipCommentLines && row.Count > 0 && row[0].TrimStart().StartsWith("#"))
+                        continue;
+                    result.Add(row.ToArray());
+                }
+                return result;
             }
 
             public static unsafe string MergeCSV(string baseText, string overrideText)

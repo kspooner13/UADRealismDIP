@@ -1,0 +1,5 @@
+# Mod updates list. First row = header; use commas inside quotes if needed.
+# Example: "My Mod, Extended",1.2.0,Fixed bug in port UI
+Date,Mod,Version,Notes
+2025-02-01,Tweaks and Fixes,1.0.0,Mod Updates panel added. Check TAFData/modupdates.csv to edit this list.
+2025-02-10,Example Mod,2.1.0,"Added new feature, improved performance"
